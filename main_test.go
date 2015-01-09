@@ -1,6 +1,7 @@
 package main
 
 import (
+  "strings"
   "io/ioutil"
   "net/http"
   "net/http/httptest"
@@ -20,4 +21,19 @@ func Test_Routing(t *testing.T) {
   a.NoError(err)
   body, err := ioutil.ReadAll(res.Body)
   a.Equal(string(body), "Users Index")
+
+  res, err = http.Get(ts.URL + "/users/42")
+  a.NoError(err)
+  body, err = ioutil.ReadAll(res.Body)
+  a.Equal(string(body), "Users Show: 42")
+
+  res, err = http.Post(ts.URL + "/users/", "plain/text", strings.NewReader("Hello!"))
+  a.NoError(err)
+  body, err = ioutil.ReadAll(res.Body)
+  a.Equal(string(body), "Users Create: Hello!")
+
+  res, err = http.Get(ts.URL + "/posts")
+  a.NoError(err)
+  body, err = ioutil.ReadAll(res.Body)
+  a.Equal(string(body), "POSTS!")
 }
