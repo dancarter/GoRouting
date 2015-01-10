@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/gorilla/pat"
+	"github.com/gorilla/mux"
 )
 
 func IndexUsers(res http.ResponseWriter, req *http.Request) {
@@ -13,7 +13,8 @@ func IndexUsers(res http.ResponseWriter, req *http.Request) {
 }
 
 func ShowUser(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(res, "Users Show: %s", req.URL.Query().Get(":id"))
+	vars := mux.Vars(req)
+	fmt.Fprintf(res, "Users Show: %s", vars["id"])
 }
 
 func CreateUser(res http.ResponseWriter, req *http.Request) {
@@ -26,12 +27,12 @@ func IndexPosts(res http.ResponseWriter, req *http.Request) {
 }
 
 func NewMux() http.Handler {
-	pat := pat.New()
-	pat.Get("/posts", IndexPosts)
-	pat.Get("/users/{id}", ShowUser)
-	pat.Get("/users", IndexUsers)
-	pat.Post("/users", CreateUser)
-	return pat
+	r := mux.NewRouter()
+	r.HandleFunc("/posts", IndexPosts).Methods("GET")
+	r.HandleFunc("/users/{id:[0-9]+}", ShowUser).Methods("GET")
+	r.HandleFunc("/users", IndexUsers).Methods("GET")
+	r.HandleFunc("/users", CreateUser).Methods("POST")
+	return r
 }
 
 func main() {
