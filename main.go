@@ -1,35 +1,39 @@
 package main
 
 import (
-  "fmt"
-  "io/ioutil"
-  "net/http"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/gorilla/pat"
 )
 
-func NewMux() *http.ServeMux {
-  mux := http.NewServeMux()
-  users := func(res http.ResponseWriter, req *http.Request) {
-    if req.URL.Path == "" {
-      switch req.Method {
-      case "GET":
-        fmt.Fprint(res, "Users Index")
-      case "POST":
-        body, _ := ioutil.ReadAll(req.Body)
-        fmt.Fprintf(res, "Users Create: %s", body)
-      }
+func IndexUsers(res http.ResponseWriter, req *http.Request) {
+	fmt.Fprint(res, "Users Index")
+}
 
-    } else {
-      fmt.Fprintf(res, "Users Show: %s", req.URL.Path)
-    }
-  }
-  mux.HandleFunc("/posts", func(res http.ResponseWriter, req *http.Request){
-    fmt.Fprint(res, "POSTS!")
-  })
-  mux.Handle("/users/", http.StripPrefix("/users/", http.HandlerFunc(users)))
+func ShowUser(res http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(res, "Users Show: %s", req.URL.Query().Get(":id"))
+}
 
-  return mux
+func CreateUser(res http.ResponseWriter, req *http.Request) {
+	body, _ := ioutil.ReadAll(req.Body)
+	fmt.Fprintf(res, "Users Create: %s", body)
+}
+
+func IndexPosts(res http.ResponseWriter, req *http.Request) {
+	fmt.Fprint(res, "POSTS!")
+}
+
+func NewMux() http.Handler {
+	pat := pat.New()
+	pat.Get("/posts", IndexPosts)
+	pat.Get("/users/{id}", ShowUser)
+	pat.Get("/users", IndexUsers)
+	pat.Post("/users", CreateUser)
+	return pat
 }
 
 func main() {
-  http.ListenAndServe(":3000", NewMux())
+	http.ListenAndServe(":3000", NewMux())
 }
